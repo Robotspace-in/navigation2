@@ -95,6 +95,16 @@ CollisionMonitor::on_configure(const rclcpp_lifecycle::State & state)
       return nav2_util::CallbackReturn::FAILURE;
     }
   }
+  cmd_vel_in_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+    cmd_vel_in_topic, 1,
+    std::bind(&CollisionMonitor::cmdVelInCallback, this, std::placeholders::_1));
+  
+  param_subs_ = this->create_subscription<std_msgs::msg::String>(
+    "param_change", 1,
+    std::bind(&CollisionMonitor::paramCallback, this, std::placeholders::_1));
+  cmd_vel_out_pub_ = this->create_publisher<geometry_msgs::msg::Twist>(
+    cmd_vel_out_topic, 1);
+
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
@@ -205,6 +215,21 @@ void CollisionMonitor::cmdVelInCallbackUnstamped(geometry_msgs::msg::Twist::Shar
 
 void CollisionMonitor::publishVelocity(
   const Action & robot_action, const std_msgs::msg::Header & header)
+void CollisionMonitor::paramCallback(std_msgs::msg::String::ConstSharedPtr msg)
+{
+  // If message contains NaN or Inf, ignore
+  (void)msg;
+  std::string base_frame_id, odom_frame_id;
+  tf2::Duration transform_tolerance;
+  RCLCPP_INFO(get_logger(), "cb: Received an update to parameter  of type ");
+    polygons_.clear();
+  base_frame_id = get_parameter("base_frame_id").as_string();
+  transform_tolerance =
+    tf2::durationFromSec(get_parameter("transform_tolerance").as_double());
+  configurePolygons(base_frame_id, transform_tolerance);
+}
+void CollisionMonitor::publishVelocity(const Action & robot_action)
+
 {
   if (robot_action.req_vel.isZero()) {
     if (!robot_action_prev_.req_vel.isZero()) {
