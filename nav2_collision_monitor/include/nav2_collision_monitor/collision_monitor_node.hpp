@@ -218,6 +218,7 @@ protected:
   // Input/output speed controls
   /// @brief Input cmd_vel subscriber
   std::unique_ptr<nav2_util::TwistSubscriber> cmd_vel_in_sub_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr param_subs_;
   /// @brief Output cmd_vel publisher
   std::unique_ptr<nav2_util::TwistPublisher> cmd_vel_out_pub_;
 
